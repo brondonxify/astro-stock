@@ -23,7 +23,8 @@ L'application repose sur un écosystème performant et typé :
 
 ## Installation et Configuration
 
-1. Cloner le projet : git clone https://github.com
+1. Cloner le projet : git clone https://github.com/brondonxify/astro-stock.git
+   
    cd CRUD
 2. Installation des node package management : npm i
 3. Lancement de la plateforme : npm run dev
