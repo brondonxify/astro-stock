@@ -113,5 +113,3 @@ Table `products` :
 | `npx drizzle-kit push` | Applique le schéma à la base de données |
 | `npx drizzle-kit generate` | Génère les fichiers de migration |
 
-
-N'oubliez pas de configurer la variable d'environnement `DATABASE_URL` sur votre plateforme de déploiement.
