@@ -28,3 +28,4 @@ L'application repose sur un écosystème performant et typé :
    cd CRUD
 2. Installation des node package management : npm i
 3. Lancement de la plateforme : npm run dev
+4. Ouverture de l'application sur un navigateur : localhost:4321
