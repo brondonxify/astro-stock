@@ -44,3 +44,9 @@ All commands are run from the root of the project, from a terminal:
 ## 👀 Want to learn more?
 
 Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+
+1. Cloner le projet : git clone https://github.com/brondonxify/astro-stock.git
+2. Accedez a l'emplacement du code source : cd astro-stock
+3. Installation des node package management : npm i
+4. Lancement de la plateforme : npm run dev
+5. Ouverture de l'application sur un navigateur : localhost:4321
