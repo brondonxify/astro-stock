@@ -1,31 +1,46 @@
-# astro-stock
-Astro-stock | Application CRUD de gestion de stock. Développée avec Astro V6.1, Drizzle ORM/Supabase pour manipuler la base de données comme un objets JavaScript classiques, et PostgreSQL pour  stockées physiquement et de manière permanente les différentes données. 
+# Astro Starter Kit: Basics
 
-Ce projet a été conçu pour offrir une interface rapide et une gestion d'inventaire fiable, en exploitant la puissance du rendu serveur d'Astro et la robustesse de PostgreSQL.
+```sh
+npm create astro@latest -- --template basics
+```
 
----
+> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
 
-## Stack Technique
+## 🚀 Project Structure
 
-L'application repose sur un écosystème performant et typé :
+Inside of your Astro project, you'll see the following folders and files:
 
-*   Framework : [Astro V6.1](https://astro.build) (Mode SSR pour une gestion dynamique).
-*   Base de données : [PostgreSQL](https://postgresql.org) (Hébergé via **Supabase**) pour un stockage physique et permanent des données.
-*   ORM : [Drizzle ORM](https://drizzle.team) pour manipuler la base de données comme des objets JavaScript classiques (Type Safety).
-*   Langage : TypeScript pour un code robuste et maintenable.
+```text
+/
+├── public/
+│   └── favicon.svg
+├── src
+│   ├── assets
+│   │   └── astro.svg
+│   ├── components
+│   │   └── Welcome.astro
+│   ├── layouts
+│   │   └── Layout.astro
+│   └── pages
+│       └── index.astro
+└── package.json
+```
 
-## Fonctionnalités (CRUD)
+To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
 
--   **Create** : Ajouter de nouveaux produits au stock (nom, quantité, prix, catégorie).
--   **Read** : Visualiser l'inventaire en temps réel avec une interface fluide.
--   **Update** : Modifier les informations ou mettre à jour les niveaux de stock.
--   **Delete** : Retirer des références de l'inventaire en toute sécurité.
+## 🧞 Commands
 
-## Installation et Configuration
+All commands are run from the root of the project, from a terminal:
 
-1. Cloner le projet : git clone https://github.com/brondonxify/astro-stock.git
-   
-   cd CRUD
-2. Installation des node package management : npm i
-3. Lancement de la plateforme : npm run dev
-4. Ouverture de l'application sur un navigateur : localhost:4321
+| Command                   | Action                                           |
+| :------------------------ | :----------------------------------------------- |
+| `npm install`             | Installs dependencies                            |
+| `npm run dev`             | Starts local dev server at `localhost:4321`      |
+| `npm run build`           | Build your production site to `./dist/`          |
+| `npm run preview`         | Preview your build locally, before deploying     |
+| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
+| `npm run astro -- --help` | Get help using the Astro CLI                     |
+
+## 👀 Want to learn more?
+
+Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).

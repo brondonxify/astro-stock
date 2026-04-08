@@ -1,0 +1,337 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { db } from "../db";
+import { products } from "../db/schema";
+
+let totalProducts = 0;
+let totalStock = 0;
+
+try {
+    const all = await db.select().from(products);
+    totalProducts = all.length;
+    for (const p of all) {
+        totalStock += Number(p.quantity);
+    }
+} catch (e) {
+    console.error(e);
+}
+---
+
+<Layout title="Accueil">
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    Bienvenu sur<br />
+                </h1>
+                <p class="hero-sub">
+                    La plateforme de gestion de stock<br />
+                    plus fiable qu'une fusée spatiale.
+                </p>
+                <div class="hero-btns">
+                    <button class="btn" id="btnOpenAdd"
+                        >Ajouter un produit</button
+                    >
+                    <a href="/products" class="btn btn-outline">Inventaire</a>
+                </div>
+            </div>
+
+            <div class="stats-container">
+                <div class="stat-card">
+                    <span class="stat-num">{totalProducts}</span>
+                    <span class="stat-label">produits</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-card">
+                    <span class="stat-num">{totalStock}</span>
+                    <span class="stat-label">unites en stock</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="popup-overlay" id="popupAdd" style="display:none;">
+        <div class="popup-box">
+            <div class="popup-header">
+                <h2>Ajouter un produit</h2>
+                <button class="popup-close" id="btnCloseAdd">×</button>
+            </div>
+
+            <div id="popupMsg" class="alert" style="display:none;"></div>
+
+            <form
+                id="formAdd"
+                method="POST"
+                action="/api/products/create"
+                enctype="application/x-www-form-urlencoded"
+            >
+                <div class="form-group">
+                    <label>Nom du produit *</label>
+                    <input
+                        type="text"
+                        name="name"
+                        required
+                        placeholder="Ex: Clavier mecanique"
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea
+                        name="description"
+                        rows="2"
+                        placeholder="Description du produit..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Quantite *</label>
+                        <input
+                            type="number"
+                            name="quantity"
+                            min="0"
+                            placeholder="0"
+                            required
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>Prix (FCFA) *</label>
+                        <input
+                            type="number"
+                            name="price"
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                            required
+                        />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Categorie</label>
+                    <select name="category">
+                        <option value="">Choisir une categorie</option>
+                        <option value="Electronique">Electronique</option>
+                        <option value="Bureautique">Bureautique</option>
+                        <option value="Mobilier">Mobilier</option>
+                        <option value="Alimentaire">Alimentaire</option>
+                        <option value="Vetements">Vetements</option>
+                        <option value="Autre">Autre</option>
+                    </select>
+                </div>
+
+                <div class="popup-actions">
+                    <button type="submit" class="btn">Valider</button>
+                    <button
+                        type="button"
+                        class="btn btn-outline"
+                        id="btnCloseAdd2">Fermer</button
+                    >
+                </div>
+            </form>
+        </div>
+    </div>
+</Layout>
+
+<style>
+    .hero {
+        height: calc(100vh - 48px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 1.5rem;
+        background: var(--bg);
+        overflow: hidden;
+    }
+
+    .hero-container {
+        width: 100%;
+        max-width: 1200px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2.5rem;
+    }
+
+    .hero-content {
+        text-align: center;
+        max-width: 800px;
+    }
+
+    .hero-tag {
+        font-size: 0.7rem;
+        letter-spacing: 0.25em;
+        color: var(--text2);
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        font-weight: 500;
+    }
+
+    .hero-title {
+        font-size: clamp(2rem, 4.5vw, 3.5rem);
+        font-weight: 700;
+        line-height: 1.1;
+        margin-bottom: 1rem;
+        letter-spacing: -0.02em;
+    }
+
+    .hero-accent {
+        color: var(--text2);
+        font-style: italic;
+        font-weight: 300;
+    }
+
+    .hero-sub {
+        font-size: 1rem;
+        color: var(--text2);
+        line-height: 1.7;
+        margin-bottom: 2rem;
+        font-weight: 400;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .hero-btns {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .stats-container {
+        display: flex;
+        align-items: center;
+        gap: 2.5rem;
+        padding: 1.5rem 2.5rem;
+        border: 1px solid var(--border);
+        background: var(--bg2);
+    }
+
+    .stat-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.3rem;
+        min-width: 130px;
+    }
+
+    .stat-num {
+        font-size: 2.2rem;
+        font-weight: 700;
+        line-height: 1;
+        color: var(--text);
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--text2);
+        font-weight: 500;
+    }
+
+    .stat-divider {
+        width: 1px;
+        height: 45px;
+        background: var(--border);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .hero {
+            height: auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .hero-container {
+            gap: 2rem;
+        }
+
+        .hero-title {
+            font-size: 2rem;
+        }
+
+        .stats-container {
+            padding: 1.25rem 1.5rem;
+            gap: 1.5rem;
+        }
+
+        .stat-num {
+            font-size: 1.8rem;
+        }
+
+        .stat-divider {
+            height: 35px;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    const popup = document.getElementById("popupAdd");
+    const btnOpen = document.getElementById("btnOpenAdd");
+    const btnClose = document.getElementById("btnCloseAdd");
+    const btnClose2 = document.getElementById("btnCloseAdd2");
+    const form = document.getElementById("formAdd");
+    const msg = document.getElementById("popupMsg");
+
+    btnOpen.addEventListener("click", () => {
+        popup.style.display = "flex";
+    });
+
+    function closePopup() {
+        popup.style.display = "none";
+        msg.style.display = "none";
+        form.reset();
+    }
+
+    btnClose.addEventListener("click", closePopup);
+    btnClose2.addEventListener("click", closePopup);
+
+    popup.addEventListener("click", (e) => {
+        if (e.target === popup) closePopup();
+    });
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const data = new URLSearchParams(new FormData(form));
+
+        try {
+            const res = await fetch("/api/products/create", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: data.toString(),
+            });
+
+            const json = await res.json();
+            msg.style.display = "block";
+
+            if (json.success) {
+                msg.className = "alert alert-success";
+                msg.textContent = "Produit ajoute avec succes";
+                form.reset();
+                setTimeout(() => {
+                    window.location.href = "/";
+                }, 800);
+            } else {
+                msg.className = "alert alert-error";
+                msg.textContent = json.error || "Une erreur est survenue";
+            }
+        } catch (err) {
+            msg.style.display = "block";
+            msg.className = "alert alert-error";
+            msg.textContent = "Erreur de connexion";
+        }
+    });
+</script>

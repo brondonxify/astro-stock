@@ -1,0 +1,578 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { db } from "../../db";
+import { products } from "../../db/schema";
+import { desc } from "drizzle-orm";
+
+let allProducts = [];
+
+try {
+    allProducts = await db
+        .select()
+        .from(products)
+        .orderBy(desc(products.createdAt));
+} catch (e) {
+    console.error(e);
+}
+---
+
+<Layout title="Inventaire">
+    <section class="inventory">
+        <div class="inventory-header">
+            <div>
+                <div class="page-tag">INVENTAIRE</div>
+                <h1 class="page-title">Tous les produits</h1>
+            </div>
+            <button class="btn" id="btnOpenAdd">+ Ajouter</button>
+        </div>
+
+        {
+            allProducts.length === 0 ? (
+                <div class="empty">
+                    <p>Aucun produit en stock.</p>
+                    <button class="btn" id="btnOpenAddEmpty">
+                        Ajouter le premier produit
+                    </button>
+                </div>
+            ) : (
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Categorie</th>
+                            <th>Quantite</th>
+                            <th>Prix</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {allProducts.map((p) => (
+                            <tr>
+                                <td class="td-name">{p.name}</td>
+                                <td class="td-cat">{p.category || "—"}</td>
+                                <td
+                                    class={
+                                        Number(p.quantity) <= 5 ? "td-low" : ""
+                                    }
+                                >
+                                    {p.quantity}
+                                </td>
+                                <td>{p.price} FCFA</td>
+                                <td class="td-actions">
+                                    <button
+                                        class="btn-sm btn-view"
+                                        data-id={p.id}
+                                    >
+                                        Voir
+                                    </button>
+                                    <button
+                                        class="btn-sm btn-edit"
+                                        data-id={p.id}
+                                    >
+                                        Modifier
+                                    </button>
+                                    <button
+                                        class="btn-sm btn-del"
+                                        data-id={p.id}
+                                    >
+                                        Supprimer
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )
+        }
+    </section>
+
+    <div class="popup-overlay" id="popupAdd" style="display:none;">
+        <div class="popup-box">
+            <div class="popup-header">
+                <h2>Ajouter un produit</h2>
+                <button class="popup-close" id="closeAdd">×</button>
+            </div>
+            <div id="msgAdd" class="alert" style="display:none;"></div>
+            <form id="formAdd" enctype="application/x-www-form-urlencoded">
+                <div class="form-group">
+                    <label>Nom *</label>
+                    <input type="text" name="name" required />
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" rows="2"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Quantite *</label>
+                        <input type="number" name="quantity" min="0" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Prix (FCFA) *</label>
+                        <input
+                            type="number"
+                            name="price"
+                            min="0"
+                            step="0.01"
+                            required
+                        />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Categorie</label>
+                    <select name="category">
+                        <option value="">Choisir</option>
+                        <option value="Electronique">Electronique</option>
+                        <option value="Bureautique">Bureautique</option>
+                        <option value="Mobilier">Mobilier</option>
+                        <option value="Alimentaire">Alimentaire</option>
+                        <option value="Vetements">Vetements</option>
+                        <option value="Autre">Autre</option>
+                    </select>
+                </div>
+                <div class="popup-actions">
+                    <button type="submit" class="btn">Valider</button>
+                    <button type="button" class="btn btn-outline" id="closeAdd2"
+                        >Fermer</button
+                    >
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="popup-overlay" id="popupView" style="display:none;">
+        <div class="popup-box">
+            <div class="popup-header">
+                <h2>Detail du produit</h2>
+                <button class="popup-close" id="closeView">×</button>
+            </div>
+            <div id="viewContent"></div>
+        </div>
+    </div>
+
+    <div class="popup-overlay" id="popupEdit" style="display:none;">
+        <div class="popup-box">
+            <div class="popup-header">
+                <h2>Modifier le produit</h2>
+                <button class="popup-close" id="closeEdit">×</button>
+            </div>
+            <div id="msgEdit" class="alert" style="display:none;"></div>
+            <form id="formEdit" enctype="application/x-www-form-urlencoded">
+                <input type="hidden" name="id" id="editId" />
+                <div class="form-group">
+                    <label>Nom *</label>
+                    <input type="text" name="name" id="editName" required />
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" id="editDescription" rows="2"
+                    ></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Quantite *</label>
+                        <input
+                            type="number"
+                            name="quantity"
+                            id="editQuantity"
+                            min="0"
+                            required
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>Prix (FCFA) *</label>
+                        <input
+                            type="number"
+                            name="price"
+                            id="editPrice"
+                            min="0"
+                            step="0.01"
+                            required
+                        />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Categorie</label>
+                    <select name="category" id="editCategory">
+                        <option value="">Choisir</option>
+                        <option value="Electronique">Electronique</option>
+                        <option value="Bureautique">Bureautique</option>
+                        <option value="Mobilier">Mobilier</option>
+                        <option value="Alimentaire">Alimentaire</option>
+                        <option value="Vetements">Vetements</option>
+                        <option value="Autre">Autre</option>
+                    </select>
+                </div>
+                <div class="popup-actions">
+                    <button type="submit" class="btn">Sauvegarder</button>
+                    <button
+                        type="button"
+                        class="btn btn-outline"
+                        id="closeEdit2">Fermer</button
+                    >
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="popup-overlay" id="popupDel" style="display:none;">
+        <div class="popup-box">
+            <div class="popup-header">
+                <h2>Confirmer la suppression</h2>
+                <button class="popup-close" id="closeDel">×</button>
+            </div>
+            <div id="delContent">
+                <p style="color: var(--text2); margin-bottom: 1.5rem;">
+                    Cette action est irreversible.
+                </p>
+                <div
+                    id="delInfo"
+                    style="border: 1px solid var(--border); padding: 1rem; margin-bottom: 1.5rem;"
+                >
+                </div>
+                <div class="popup-actions">
+                    <button class="btn btn-danger" id="confirmDel"
+                        >Supprimer</button
+                    >
+                    <button class="btn btn-outline" id="closeDel2"
+                        >Annuler</button
+                    >
+                </div>
+            </div>
+        </div>
+    </div>
+</Layout>
+
+<style>
+    .inventory {
+        padding: 2rem 3rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .inventory-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 2rem;
+        padding-bottom: 1.25rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .page-tag {
+        font-size: 0.7rem;
+        letter-spacing: 0.25em;
+        color: var(--text2);
+        margin-bottom: 0.4rem;
+        text-transform: uppercase;
+        font-weight: 500;
+    }
+
+    .page-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+
+    .table th {
+        text-align: left;
+        padding: 0.7rem 1rem;
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text2);
+        border-bottom: 1px solid var(--border);
+        font-weight: 600;
+    }
+
+    .table td {
+        padding: 0.9rem 1rem;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+    }
+
+    .table tr:hover td {
+        background: var(--bg3);
+    }
+
+    .td-name {
+        font-weight: 600;
+    }
+
+    .td-cat {
+        color: var(--text2);
+        font-size: 0.85rem;
+    }
+
+    .td-low {
+        color: var(--danger);
+        font-weight: 600;
+    }
+
+    .td-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-sm {
+        padding: 0.35rem 0.75rem;
+        font-size: 0.7rem;
+        font-family: "Poppins", sans-serif;
+        letter-spacing: 0.05em;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+        text-transform: uppercase;
+        font-weight: 500;
+    }
+
+    .btn-sm:hover {
+        background: var(--text);
+        color: var(--bg);
+    }
+
+    .btn-del {
+        border-color: var(--danger);
+        color: var(--danger);
+    }
+
+    .btn-del:hover {
+        background: var(--danger);
+        color: #fff;
+    }
+
+    .empty {
+        text-align: center;
+        padding: 3rem;
+        border: 1px dashed var(--border);
+        color: var(--text2);
+    }
+
+    .empty p {
+        margin-bottom: 1.25rem;
+        font-size: 1rem;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .view-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .view-item {
+        border: 1px solid var(--border);
+        padding: 1rem;
+    }
+
+    .view-label {
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text2);
+        margin-bottom: 0.4rem;
+        display: block;
+        font-weight: 500;
+    }
+
+    .view-val {
+        font-size: 1.15rem;
+        font-weight: 600;
+    }
+</style>
+
+<script>
+    function openPopup(id) {
+        document.getElementById(id).style.display = "flex";
+    }
+    function closePopup(id) {
+        document.getElementById(id).style.display = "none";
+    }
+
+    document
+        .getElementById("btnOpenAdd")
+        ?.addEventListener("click", () => openPopup("popupAdd"));
+    document
+        .getElementById("btnOpenAddEmpty")
+        ?.addEventListener("click", () => openPopup("popupAdd"));
+    document
+        .getElementById("closeAdd")
+        ?.addEventListener("click", () => closePopup("popupAdd"));
+    document
+        .getElementById("closeAdd2")
+        ?.addEventListener("click", () => closePopup("popupAdd"));
+    document
+        .getElementById("closeView")
+        ?.addEventListener("click", () => closePopup("popupView"));
+    document
+        .getElementById("closeEdit")
+        ?.addEventListener("click", () => closePopup("popupEdit"));
+    document
+        .getElementById("closeEdit2")
+        ?.addEventListener("click", () => closePopup("popupEdit"));
+    document
+        .getElementById("closeDel")
+        ?.addEventListener("click", () => closePopup("popupDel"));
+    document
+        .getElementById("closeDel2")
+        ?.addEventListener("click", () => closePopup("popupDel"));
+
+    ["popupAdd", "popupView", "popupEdit", "popupDel"].forEach((id) => {
+        document.getElementById(id)?.addEventListener("click", (e) => {
+            if (e.target.id === id) closePopup(id);
+        });
+    });
+
+    const formAdd = document.getElementById("formAdd");
+    const msgAdd = document.getElementById("msgAdd");
+
+    formAdd?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const data = new URLSearchParams(new FormData(formAdd));
+        const res = await fetch("/api/products/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: data.toString(),
+        });
+        const json = await res.json();
+        msgAdd.style.display = "block";
+        if (json.success) {
+            msgAdd.className = "alert alert-success";
+            msgAdd.textContent = "Produit ajoute";
+            formAdd.reset();
+            setTimeout(() => {
+                window.location.href = "/products";
+            }, 800);
+        } else {
+            msgAdd.className = "alert alert-error";
+            msgAdd.textContent = json.error || "Erreur";
+        }
+    });
+
+    document.querySelectorAll(".btn-view").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            const id = btn.dataset.id;
+            const res = await fetch(`/api/products/${id}`);
+            const json = await res.json();
+            if (json.success) {
+                const p = json.product;
+                document.getElementById("viewContent").innerHTML = `
+          <div class="view-grid">
+            <div class="view-item">
+              <span class="view-label">Nom</span>
+              <span class="view-val">${p.name}</span>
+            </div>
+            <div class="view-item">
+              <span class="view-label">Categorie</span>
+              <span class="view-val">${p.category || "—"}</span>
+            </div>
+            <div class="view-item">
+              <span class="view-label">Quantite</span>
+              <span class="view-val">${p.quantity}</span>
+            </div>
+            <div class="view-item">
+              <span class="view-label">Prix</span>
+              <span class="view-val">${p.price} FCFA</span>
+            </div>
+            <div class="view-item" style="grid-column: span 2;">
+              <span class="view-label">Description</span>
+              <span class="view-val" style="font-size:0.95rem; font-weight:normal;">${p.description || "—"}</span>
+            </div>
+          </div>
+        `;
+                openPopup("popupView");
+            }
+        });
+    });
+
+    document.querySelectorAll(".btn-edit").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            const id = btn.dataset.id;
+            const res = await fetch(`/api/products/${id}`);
+            const json = await res.json();
+            if (json.success) {
+                const p = json.product;
+                document.getElementById("editId").value = p.id;
+                document.getElementById("editName").value = p.name;
+                document.getElementById("editDescription").value =
+                    p.description || "";
+                document.getElementById("editQuantity").value = p.quantity;
+                document.getElementById("editPrice").value = p.price;
+                document.getElementById("editCategory").value =
+                    p.category || "";
+                document.getElementById("msgEdit").style.display = "none";
+                openPopup("popupEdit");
+            }
+        });
+    });
+
+    const formEdit = document.getElementById("formEdit");
+    const msgEdit = document.getElementById("msgEdit");
+
+    formEdit?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const data = new URLSearchParams(new FormData(formEdit));
+        const id = document.getElementById("editId").value;
+        const res = await fetch(`/api/products/${id}/update`, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: data.toString(),
+        });
+        const json = await res.json();
+        msgEdit.style.display = "block";
+        if (json.success) {
+            msgEdit.className = "alert alert-success";
+            msgEdit.textContent = "Produit modifie";
+            setTimeout(() => {
+                window.location.href = "/products";
+            }, 800);
+        } else {
+            msgEdit.className = "alert alert-error";
+            msgEdit.textContent = json.error || "Erreur";
+        }
+    });
+
+    let deleteId = null;
+
+    document.querySelectorAll(".btn-del").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            deleteId = btn.dataset.id;
+            const res = await fetch(`/api/products/${deleteId}`);
+            const json = await res.json();
+            if (json.success) {
+                const p = json.product;
+                document.getElementById("delInfo").innerHTML = `
+          <strong>${p.name}</strong><br>
+          <span style="color:var(--text2); font-size:0.85rem;">
+            Quantite: ${p.quantity} — Prix: ${p.price} FCFA
+          </span>
+        `;
+                openPopup("popupDel");
+            }
+        });
+    });
+
+    document
+        .getElementById("confirmDel")
+        ?.addEventListener("click", async () => {
+            if (!deleteId) return;
+            const res = await fetch(`/api/products/${deleteId}/delete`, {
+                method: "POST",
+            });
+            const json = await res.json();
+            if (json.success) {
+                window.location.href = "/products";
+            }
+        });
+</script>
